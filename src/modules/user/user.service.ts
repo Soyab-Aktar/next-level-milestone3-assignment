@@ -1,3 +1,4 @@
+import { Request } from "express";
 import { pool } from "../../config/db"
 
 
@@ -19,9 +20,19 @@ const deleteUser = async (userId: string) => {
   return result;
 }
 
-const updateUser = async (name: string, email: string, phone: string, role: string, userId: string) => {
-  const result = await pool.query(`UPDATE users SET name=$1, email=$2, phone=$3, role=$4 WHERE id=$5 RETURNING *`, [name, email, phone, role, userId]);
-  return result;
+const updateUser = async (name: string, email: string, phone: string, role: string, userId: string, currUserEmail: string, currUserRole: string) => {
+
+  if (currUserRole === 'admin') {
+    const result = await pool.query(`UPDATE users SET name=$1, email=$2, phone=$3, role=$4 WHERE id=$5 RETURNING *`, [name, email, phone, role, userId]);
+    return result;
+  }
+  else if (currUserEmail === email) {
+    const result = await pool.query(`UPDATE users SET name=$1, email=$2, phone=$3, role=$4 WHERE id=$5 RETURNING *`, [name, email, phone, role, userId]);
+    return result;
+  }
+  else {
+    throw new Error("Access Denied!!");
+  }
 }
 
 export const userService = {

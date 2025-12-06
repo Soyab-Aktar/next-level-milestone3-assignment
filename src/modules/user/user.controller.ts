@@ -58,8 +58,11 @@ const deleteUser = async (req: Request, res: Response) => {
 
 const updateUser = async (req: Request, res: Response) => {
   const { name, email, phone, role } = req.body;
+  const currUserRole = req.user!.role;
+  const currUserEmail = req.user!.email;
   try {
-    const result = await userService.updateUser(name, email, phone, role, req.params.userId as string);
+    const result = await userService.updateUser(name, email, phone, role, req.params.userId as string, currUserEmail, currUserRole);
+    // const result = await userService.updateUser(req);
 
     if (result.rows.length === 0) {
       res.status(404).json({
@@ -77,7 +80,13 @@ const updateUser = async (req: Request, res: Response) => {
     }
 
   } catch (error: any) {
-    res.status(500).json({
+    if (error.message === "Access Denied!!") {
+      return res.status(500).json({
+        success: false,
+        message: error.message
+      })
+    }
+    return res.status(500).json({
       success: false,
       message: error.message
     })
