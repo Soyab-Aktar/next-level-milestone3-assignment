@@ -6,21 +6,21 @@ const getUsers = async () => {
   return result;
 }
 
-const deleteUser = async (id: string) => {
+const deleteUser = async (userId: string) => {
   const bookingCheck = await pool.query(
     `SELECT COUNT(*) FROM bookings WHERE customer_id = $1 AND status = 'active'`,
-    [id]
+    [userId]
   );
 
   if (parseInt(bookingCheck.rows[0].count) > 0) {
     return false;
   }
-  const result = await pool.query(`DELETE FROM users WHERE id = $1`, [id]);
+  const result = await pool.query(`DELETE FROM users WHERE id = $1`, [userId]);
   return result;
 }
 
-const updateUser = async (name: string, email: string, phone: string, role: string, id: string) => {
-  const result = await pool.query(`UPDATE users SET name=$1, email=$2, phone=$3, role=$4 WHERE id=$5 RETURNING *`, [name, email, phone, role, id]);
+const updateUser = async (name: string, email: string, phone: string, role: string, userId: string) => {
+  const result = await pool.query(`UPDATE users SET name=$1, email=$2, phone=$3, role=$4 WHERE id=$5 RETURNING *`, [name, email, phone, role, userId]);
   return result;
 }
 

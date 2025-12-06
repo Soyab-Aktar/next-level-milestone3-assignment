@@ -4,7 +4,7 @@ import { userController } from "./user.controller";
 const router = express.Router();
 
 router.get('/users', userController.getUsers);
-router.delete('/users/:id', userController.deleteUser);
-router.put('/users/:id', userController.updateUser);
+router.delete('/users/:userId', userController.deleteUser);
+router.put('/users/:userId', userController.updateUser);
 
 export const userRoutes = router;
