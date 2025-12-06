@@ -27,7 +27,36 @@ const createUser = async (req: Request, res: Response) => {
   }
 }
 
+const loginUser = async (req: Request, res: Response) => {
+  try {
+    const { email, password } = req.body;
+    const result = await authService.loginUser(email, password);
+    res.status(200).json({
+      success: true,
+      message: "User Login Completed",
+      data: result
+    })
+  } catch (err: any) {
+    if (err.message === "User Not Exist") {
+      return res.status(404).json({
+        success: false,
+        message: err.message,
+      })
+    }
+    if (err.message === "Password Incorect") {
+      return res.status(404).json({
+        success: false,
+        message: err.message,
+      })
+    }
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    })
+  }
+}
+
 
 export const authController = {
-  createUser,
+  createUser, loginUser
 }
