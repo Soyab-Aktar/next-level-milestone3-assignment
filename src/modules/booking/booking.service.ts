@@ -42,11 +42,135 @@ const createBooking = async (payload: Record<string, unknown>) => {
   };
 }
 
-const getBooking = async () => {
-  const result = await pool.query(`SELECT * FROM bookings`);
-  return result;
+const getBooking = async (currUserEmail: string, currUserRole: string) => {
+  if (currUserRole === 'admin') {
+    const result = await pool.query(`
+      SELECT b.id,b.customer_id,b.vehicle_id,b.rent_start_date,b.rent_end_date,b.total_price,b.status,
+        json_build_object(
+          'name', u.name,
+          'email', u.email
+        ) as customer,
+        json_build_object(
+          'vehicle_name', v.vehicle_name,
+          'registration_number', v.registration_number
+        ) as vehicle
+      FROM bookings b
+      JOIN users u ON b.customer_id = u.id
+      JOIN vehicles v ON b.vehicle_id = v.id
+      ORDER BY b.id DESC
+    `);
+    return result;
+  } else {
+    const userResult = await pool.query(
+      `SELECT id FROM users WHERE email = $1`,
+      [currUserEmail]
+    );
+
+    if (userResult.rows.length === 0) {
+      throw new Error('User not found');
+    }
+
+    const userId = userResult.rows[0].id;
+
+    const result = await pool.query(`
+      SELECT b.id,b.vehicle_id,b.rent_start_date,b.rent_end_date,b.total_price,b.status,
+        json_build_object(
+          'vehicle_name', v.vehicle_name,
+          'registration_number', v.registration_number,
+          'type', v.type
+        ) as vehicle
+      FROM bookings b
+      JOIN vehicles v ON b.vehicle_id = v.id
+      WHERE b.customer_id = $1
+      ORDER BY b.id DESC
+    `, [userId]);
+
+    return result;
+  }
+}
+
+const updateBooking = async (
+  bookingId: string,
+  status: string,
+  userEmail: string,
+  userRole: string
+) => {
+  const userResult = await pool.query(
+    `SELECT id FROM users WHERE email = $1`,
+    [userEmail]
+  );
+  if (userResult.rows.length === 0) {
+    throw new Error('User not found');
+  }
+  const userId = userResult.rows[0].id;
+
+  const bookingCheck = await pool.query(
+    `SELECT * FROM bookings WHERE id = $1`,
+    [bookingId]
+  );
+
+  if (bookingCheck.rows.length === 0) {
+    throw new Error('Booking not found');
+  }
+
+  const booking = bookingCheck.rows[0];
+
+  if (userRole === 'customer') {
+    if (booking.customer_id !== userId) {
+      throw new Error('You can only cancel your own bookings');
+    }
+
+    if (status !== 'cancelled') {
+      throw new Error('Customers can only cancel bookings');
+    }
+
+    const today = new Date();
+    const startDate = new Date(booking.rent_start_date);
+
+    if (today >= startDate) {
+      throw new Error('Cannot cancel booking after start date');
+    }
+
+
+    const result = await pool.query(
+      `UPDATE bookings SET status = $1 WHERE id = $2 RETURNING *`,
+      ['cancelled', bookingId]
+    );
+
+    await pool.query(
+      `UPDATE vehicles SET availability_status = 'available' WHERE id = $1`,
+      [booking.vehicle_id]
+    );
+
+    return { ...result.rows[0], statusChanged: 'cancelled' };
+
+  } else if (userRole === 'admin') {
+    if (status !== 'returned') {
+      throw new Error('Admins can only mark bookings as returned');
+    }
+
+    const result = await pool.query(
+      `UPDATE bookings SET status = $1 WHERE id = $2 RETURNING *`,
+      ['returned', bookingId]
+    );
+
+    const vehicleUpdate = await pool.query(
+      `UPDATE vehicles SET availability_status = 'available' WHERE id = $1 RETURNING availability_status`,
+      [booking.vehicle_id]
+    );
+
+    return {
+      ...result.rows[0],
+      vehicle: {
+        availability_status: vehicleUpdate.rows[0].availability_status
+      },
+      statusChanged: 'returned'
+    };
+  }
+
+  throw new Error('Invalid role');
 }
 
 export const bookingService = {
-  createBooking, getBooking
+  createBooking, getBooking, updateBooking
 }
