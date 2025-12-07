@@ -6,7 +6,7 @@ import { userService } from "./user.service";
 const getUsers = async (req: Request, res: Response) => {
   try {
     const result = await userService.getUsers();
-    res.status(201).json({
+    res.status(200).json({
       success: true,
       message: "Users data Retrived Successfully",
       data: result.rows,
@@ -23,31 +23,26 @@ const getUsers = async (req: Request, res: Response) => {
 const deleteUser = async (req: Request, res: Response) => {
   try {
     const result = await userService.deleteUser(req.params.userId as string);
-
-    if (!result) {
-      res.status(409).json({
+    if (result.rowCount === 0) {
+      res.status(404).json({
         success: false,
-        message: "User have Active bookings, so we cant delete the user",
+        message: "User Not Exist",
       })
     }
     else {
-      if (result.rowCount === 0) {
-        res.status(404).json({
-          success: false,
-          message: "Data not found",
-        })
-      }
-      else {
-        res.status(201).json({
-          success: true,
-          message: "User data Deleted Successfully",
-          data: null,
-        });
-      }
+      res.status(200).json({
+        success: true,
+        message: "User data Deleted Successfully",
+      });
     }
-
   } catch (error: any) {
-    res.status(500).json({
+    if (error.message === "User have Active Booking!!") {
+      return res.status(403).json({
+        success: false,
+        message: error.message
+      })
+    }
+    return res.status(500).json({
       success: false,
       message: error.message
     })
@@ -68,7 +63,7 @@ const updateUser = async (req: Request, res: Response) => {
       })
     }
     else {
-      res.status(201).json({
+      res.status(200).json({
         success: true,
         message: "User data Updated Successfully",
         data: result.rows[0],
@@ -77,7 +72,7 @@ const updateUser = async (req: Request, res: Response) => {
 
   } catch (error: any) {
     if (error.message === "Access Denied!!") {
-      return res.status(500).json({
+      return res.status(401).json({
         success: false,
         message: error.message
       })

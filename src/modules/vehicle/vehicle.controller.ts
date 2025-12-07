@@ -7,7 +7,7 @@ const createVehicle = async (req: Request, res: Response) => {
     const result = await vehiclesService.createVehicle(req.body);
     res.status(201).json({
       succcess: true,
-      message: "Vehicle data inserted Successfully",
+      message: "Vehicle created successfully",
       data: result.rows[0],
     })
 
@@ -22,9 +22,9 @@ const createVehicle = async (req: Request, res: Response) => {
 const getVehicles = async (req: Request, res: Response) => {
   try {
     const result = await vehiclesService.getVehicles();
-    res.status(201).json({
+    res.status(200).json({
       success: true,
-      message: "Vehicles data Retrived Successfully",
+      message: "Vehicles retrieved successfully",
       data: result.rows,
     });
 
@@ -46,9 +46,9 @@ const getVehicle = async (req: Request, res: Response) => {
       })
     }
     else {
-      res.status(201).json({
+      res.status(200).json({
         success: true,
-        message: "User data Retrived Successfully",
+        message: "Vehicles retrieved successfully",
         data: result.rows[0],
       });
     }
@@ -73,7 +73,7 @@ const updateVehicles = async (req: Request, res: Response) => {
       })
     }
     else {
-      res.status(201).json({
+      res.status(200).json({
         success: true,
         message: "User data Updated Successfully",
         data: result.rows[0],
@@ -93,7 +93,7 @@ const deleteVehicle = async (req: Request, res: Response) => {
     const result = await vehiclesService.deleteVehicle(req.params.vehicleId as string);
 
     if (!result) {
-      res.status(409).json({
+      res.status(403).json({
         success: false,
         message: "Vehicle have Active bookings, so we cant delete the user",
       })
@@ -106,10 +106,9 @@ const deleteVehicle = async (req: Request, res: Response) => {
         })
       }
       else {
-        res.status(201).json({
-          success: true,
-          message: "Vehicle data Deleted Successfully",
-          data: null,
+        res.status(200).json({
+          "success": true,
+          "message": "Vehicle deleted successfully"
         });
       }
     }

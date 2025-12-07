@@ -6,11 +6,12 @@ import config from "../../config";
 const createUser = async (payload: Record<string, unknown>) => {
   const { name, email, password, phone, role } = payload;
   if ((password as string).length < 6) {
-    return false;
+    throw new Error("Password is less than 6");
   }
   const hashedPassword = await bcrypt.hash(password as string, 10);
-  const result = await pool.query(`INSERT INTO users(name, email,password, phone,role) VALUES($1, $2, $3, $4, $5) RETURNING *`, [name, email, hashedPassword, phone, role]);
-  return result;
+  await pool.query(`INSERT INTO users(name, email,password, phone,role) VALUES($1, $2, $3, $4, $5) RETURNING *`, [name, email, hashedPassword, phone, role]);
+  const newUser = await pool.query(`SELECT id, name, email, phone, role FROM users WHERE email=$1`, [email]);
+  return newUser;
 
 }
 

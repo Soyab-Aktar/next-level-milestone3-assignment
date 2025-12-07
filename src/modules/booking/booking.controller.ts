@@ -20,7 +20,7 @@ const createBooking = async (req: Request, res: Response) => {
     }
 
     if (err.message === 'Vehicle is already booked') {
-      return res.status(409).json({
+      return res.status(403).json({
         success: false,
         message: err.message
       });
