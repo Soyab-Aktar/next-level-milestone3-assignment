@@ -89,12 +89,7 @@ const getBooking = async (currUserEmail: string, currUserRole: string) => {
   }
 }
 
-const updateBooking = async (
-  bookingId: string,
-  status: string,
-  userEmail: string,
-  userRole: string
-) => {
+const updateBooking = async (bookingId: string, status: string, userEmail: string, userRole: string) => {
   const userResult = await pool.query(
     `SELECT id FROM users WHERE email = $1`,
     [userEmail]
@@ -124,6 +119,10 @@ const updateBooking = async (
       throw new Error('Customers can only cancel bookings');
     }
 
+    if (booking.status !== 'active') {
+      throw new Error('Can only cancel active bookings');
+    }
+
     const today = new Date();
     const startDate = new Date(booking.rent_start_date);
 
@@ -142,11 +141,11 @@ const updateBooking = async (
       [booking.vehicle_id]
     );
 
-    return { ...result.rows[0], statusChanged: 'cancelled' };
+    return { ...result.rows[0] };
 
   } else if (userRole === 'admin') {
-    if (status !== 'returned') {
-      throw new Error('Admins can only mark bookings as returned');
+    if (booking.status !== 'active') {
+      throw new Error('Only active bookings can be marked as returned. Cannot return a cancelled booking.');
     }
 
     const result = await pool.query(
@@ -164,12 +163,40 @@ const updateBooking = async (
       vehicle: {
         availability_status: vehicleUpdate.rows[0].availability_status
       },
-      statusChanged: 'returned'
     };
   }
 
   throw new Error('Invalid role');
 }
+
+export const autoReturnExpiredBookings = async () => {
+  try {
+    const today = new Date();
+
+    const result = await pool.query(`
+      UPDATE bookings 
+      SET status = 'returned' 
+      WHERE status = 'active' 
+      AND rent_end_date < $1 
+      RETURNING id, vehicle_id
+    `, [today]);
+
+    if (result.rows.length > 0) {
+      const vehicleIds = result.rows.map(b => b.vehicle_id);
+
+      await pool.query(`
+        UPDATE vehicles 
+        SET availability_status = 'available' 
+        WHERE id = ANY($1::int[])
+      `, [vehicleIds]);
+    }
+
+    return result.rows.length;
+  } catch (error) {
+    return 0;
+  }
+};
+
 
 export const bookingService = {
   createBooking, getBooking, updateBooking

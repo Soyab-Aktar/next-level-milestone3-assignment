@@ -76,7 +76,7 @@ const updateBooking = async (req: Request, res: Response) => {
   try {
     const result = await bookingService.updateBooking(bookingId, status, userEmail, userRole);
 
-    const message = result.statusChanged === 'cancelled'
+    const message = userRole === 'customer'
       ? "Booking cancelled successfully"
       : "Booking marked as returned. Vehicle is now available";
 
