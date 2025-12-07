@@ -50,7 +50,6 @@ const getBooking = async (req: Request, res: Response) => {
       });
     }
 
-    console.table(result.rows);
     res.status(200).json({
       success: true,
       message: currUserRole === 'admin'

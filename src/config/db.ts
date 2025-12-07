@@ -40,7 +40,6 @@ const initdb = async () => {
     )
   `);
 
-  console.log('Database tables created successfully!');
 }
 
 export default initdb;

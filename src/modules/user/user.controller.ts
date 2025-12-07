@@ -6,7 +6,6 @@ import { userService } from "./user.service";
 const getUsers = async (req: Request, res: Response) => {
   try {
     const result = await userService.getUsers();
-    console.table(result.rows);
     res.status(201).json({
       success: true,
       message: "Users data Retrived Successfully",
@@ -39,7 +38,6 @@ const deleteUser = async (req: Request, res: Response) => {
         })
       }
       else {
-        console.table(result.rows);
         res.status(201).json({
           success: true,
           message: "User data Deleted Successfully",
@@ -70,7 +68,6 @@ const updateUser = async (req: Request, res: Response) => {
       })
     }
     else {
-      console.table(result.rows);
       res.status(201).json({
         success: true,
         message: "User data Updated Successfully",

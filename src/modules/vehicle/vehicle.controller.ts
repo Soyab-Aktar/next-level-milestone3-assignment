@@ -22,7 +22,6 @@ const createVehicle = async (req: Request, res: Response) => {
 const getVehicles = async (req: Request, res: Response) => {
   try {
     const result = await vehiclesService.getVehicles();
-    console.table(result.rows);
     res.status(201).json({
       success: true,
       message: "Vehicles data Retrived Successfully",
@@ -47,7 +46,6 @@ const getVehicle = async (req: Request, res: Response) => {
       })
     }
     else {
-      console.table(result.rows);
       res.status(201).json({
         success: true,
         message: "User data Retrived Successfully",
@@ -75,7 +73,6 @@ const updateVehicles = async (req: Request, res: Response) => {
       })
     }
     else {
-      console.table(result.rows);
       res.status(201).json({
         success: true,
         message: "User data Updated Successfully",
@@ -109,7 +106,6 @@ const deleteVehicle = async (req: Request, res: Response) => {
         })
       }
       else {
-        console.table(result.rows);
         res.status(201).json({
           success: true,
           message: "Vehicle data Deleted Successfully",
