@@ -53,8 +53,9 @@ const updateUser = async (req: Request, res: Response) => {
   const { name, email, phone, role, password } = req.body;
   const currUserRole = req.user!.role;
   const currUserEmail = req.user!.email;
+  const currUserID = req.user!.id;
   try {
-    const result = await userService.updateUser(name, email, phone, role, password, req.params.userId as string, currUserEmail, currUserRole);
+    const result = await userService.updateUser(name, email, phone, role, password, req.params.userId as string, currUserEmail, currUserRole, currUserID);
 
     if (result.rows.length === 0) {
       res.status(404).json({
@@ -72,6 +73,13 @@ const updateUser = async (req: Request, res: Response) => {
 
   } catch (error: any) {
     if (error.message === "Access Denied!!") {
+      return res.status(401).json({
+        success: false,
+        message: error.message,
+        details: { currUserEmail, currUserID, currUserRole }
+      })
+    }
+    if (error.message === "Password is less than 6") {
       return res.status(401).json({
         success: false,
         message: error.message
